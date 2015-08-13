@@ -188,19 +188,16 @@
 
 <!-- build:js(.) scripts/vendor.js -->
 <!-- bower:js -->
-<script src="/bower_components/modernizr/modernizr.js"></script>
-<script src="/bower_components/jquery/dist/jquery.js"></script>
-<!-- MyGeotab uses RISON URLs, this is used to create a link to MyGeotab when the registration is complete -->
-<script src="scripts/rison.js"></script>
-<!-- CharFunk helps with identifying characters to create a short database name from company name -->
-<script src="scripts/charFunk-1.1.2.min.js"></script>
-<!-- Helps create random UUID used in generating CAPTCHA image -->
 <script src="/bower_components/node-uuid/uuid.js"></script>
+<script src="/bower_components/promise-polyfill/Promise.js"></script>
 <!-- endbower -->
 <!-- endbuild -->
 
 <!-- build:js scripts/main.js -->
-<script src="scripts/localizer.js"></script>
+<script src="scripts/rison.js"></script>
+<script src="scripts/charFunk-1.1.2.min.js"></script>
+<script src="scripts/geotab.api.js"></script>
+<script src="scripts/geotab.local.js"></script>
 <script src="scripts/main.js"></script>
 <!-- endbuild -->
 

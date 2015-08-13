@@ -1,8 +1,10 @@
 (function () {
   'use strict';
 
-  var localizer = this;
-
+  /**
+   * Continent
+   * @type {{Unknown: string, Asia: string, Africa: string, NorthAmerica: string, SouthAmerica: string, Antarctica: string, Europe: string, Australia: string}}
+   */
   var continent = {
     Unknown: "Unknown",
     Asia: "Asia",
@@ -13,12 +15,23 @@
     Europe: "Europe",
     Australia: "Australia"
   };
+
+  /**
+   * Fuel economy units
+   * @type {{LitersPer100Km: string, KmPerLiter: string, MPGUS: string, MPGImperial: string}}
+   */
   var fuelEconomyUnit = {
     LitersPer100Km: "LitersPer100Km",
     KmPerLiter: "KmPerLiter",
     MPGUS: "MPGUS",
     MPGImperial: "MPGImperial"
   };
+
+  /**
+   * Is the time zone id in US
+   * @param id {string} - the IANA time zone id
+   * @returns {boolean} - true if the time zone is in the US
+   */
   var isUS = function (id) {
     switch (id) {
       case "America/Phoenix":
@@ -55,6 +68,12 @@
         return false;
     }
   };
+
+  /**
+   * Get continent by time zone id
+   * @param id {string} - the IANA time zone id
+   * @returns {string} - the continent
+   */
   var getContinentByTimeZone = function (id) {
     switch (id) {
       case "Africa/Casablanca":
@@ -419,6 +438,12 @@
         return continent.Unknown;
     }
   };
+
+  /**
+   * Get the date time format from time zone
+   * @param id {string} - the IANA time zone id
+   * @returns {string} - the date time format
+   */
   var getDateTimeFormatByTimeZone = function (id) {
     var myContinent = getContinentByTimeZone(id);
 
@@ -437,6 +462,12 @@
         return "MM/dd/yy HH:mm:ss";
     }
   };
+
+  /**
+   * Get the fuel economy unit of measure by time zone
+   * @param id {string} - the IANA time zone id
+   * @returns {string} - the fuel economy units
+   */
   var getFuelEconomyUnitByTimeZone = function (id) {
     if (isUS(id)) {
       return fuelEconomyUnit.MPGUS;
@@ -516,6 +547,12 @@
         return fuelEconomyUnit.LitersPer100Km;
     }
   };
+
+  /**
+   * Get if metric is supported in this time zone
+   * @param id {string} - the IANA time zone id
+   * @returns {boolean} - true if the time zone supports metric units
+   */
   var getIsMetricByTimeZone = function (id) {
     if (isUS(id)) {
       return false;
@@ -537,6 +574,12 @@
         return true;
     }
   };
+
+  /**
+   * Get default map view based on time zone
+   * @param userContinent {string} - the continent
+   * @returns {Array} - the map views
+   */
   var getMapViewsByTimeZone = function (userContinent) {
     var mapViews = [];
     var MapView = function (n, x, y, w, h) {
@@ -577,7 +620,7 @@
     return mapViews;
   };
 
-  localizer = {
+  var local = {
     getContinentByTimeZone: getContinentByTimeZone,
     getDateTimeFormatByTimeZone: getDateTimeFormatByTimeZone,
     getFuelEconomyUnitByTimeZone: getFuelEconomyUnitByTimeZone,
@@ -589,7 +632,7 @@
     window.geotab = {};
   }
 
-  window.geotab.localizer = localizer;
+  window.geotab.local = local;
 
-  return localizer;
+  return local;
 }());

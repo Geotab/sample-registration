@@ -4,7 +4,8 @@
   "dependencies": {
     "bootstrap": "~3.3.5",
     "modernizr": "~2.8.3",
-    "node-uuid": "~1.4.3"
+    "node-uuid": "~1.4.3",
+    "promise-polyfill": "~2.1.0"
   },
   "overrides": {
     "bootstrap": {

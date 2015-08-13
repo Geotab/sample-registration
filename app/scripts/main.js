@@ -1,12 +1,13 @@
 // jshint devel:true
 document.addEventListener('DOMContentLoaded', function () {
+  'use strict';
   // This is the host will will post to to create the database. This should be the root server in the federation.
-  var host = '127.0.0.1';//'my.geotab.com';
-  // The MyGeotab API only supports requests over https
-  var protocol = "https:";
+  var host = 'my.geotab.com';
 
-  // Localizer - helps create local options based on selected time zone. See app/scripts/localizer.js.
-  var localizer = geotab.localizer;
+  // local - helps create local options based on selected time zone. See app/scripts/local.js.
+  var local = geotab.local;
+  // call - helps make calls to MyGeotab API
+  var call = geotab.api.post;
 
   // DOM Elements
   var elError = document.querySelector('#error');
@@ -86,10 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var errorString = 'Error';
     if (err && (err.name || err.message)) {
       errorString = (err.name ? err.name + ': ' : +'') + (err.message || '');
-    } else if (err.responseText) {
-      errorString = err.responseText;
-    } else if (err.target || err.status === 0) {
-      errorString = 'Network Error: Couldn\'t connect to the server. Please check your network connection and try again.';
     }
     elErrorContent.textContent = errorString;
     elError.style.display = 'block';
@@ -100,45 +97,6 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   var hideError = function () {
     elError.style.display = 'none';
-  };
-
-  // Ajax
-  /**
-   * Make a request to the server
-   * @param server - The host name (ex. 'my.geotab.com')
-   * @param method - The Method
-   * @param params - The parameters
-   * @returns {*} a promise that will supply the results
-   */
-  var call = function (server, method, params) {
-    var promise,
-      getEndpoint = function (host) {
-        return protocol + '//' + host + '/apiv1';
-      },
-      getDataString = function (method, data) {
-        var payload = {
-          method: method,
-          params: data
-        };
-        return 'JSON-RPC=' + encodeURIComponent(JSON.stringify(payload));
-      },
-      processResult = function (results) {
-        if (results.error) {
-          return $.Deferred().rejectWith(this, [results.error]);
-        }
-        return results.result;
-      };
-
-    // TODO: Use JSON-P
-    promise = $.ajax({
-      type: 'POST',
-      url: getEndpoint(server),
-      data: getDataString(method, params || {}),
-      dataType: 'json',
-      timeout: 300000 // 5 minutes
-    });
-
-    return promise.then(processResult);
   };
 
   /**
@@ -197,11 +155,11 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function (result) {
           changeValidationState(elDatabaseName.parentNode, result ? validationState.error : validationState.success);
           elDatabaseName.parentNode.querySelector('.help-block').style.display = result ? 'block' : 'none';
-        })
-        .always(function () {
           elWaiting.style.display = 'none';
-        })
-        .fail(showError);
+        }, function (err) {
+          elWaiting.style.display = 'none';
+          showError(err);
+      });
     }, 600);
   };
 
@@ -230,8 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }).map(function (timeZone) {
             return '<option value="' + timeZone.id + '">' + timeZone.id + '</option>';
           });
-      })
-      .fail(showError);
+      }, showError);
   };
 
   // store the captcha id in scope so we can use it when we create the database
@@ -242,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   var renderCaptcha = function () {
     captchaId = uuid.v4();
-    elCaptchaImage.setAttribute('src', protocol + '//' + host + '/apiv1/GenerateCaptcha?id=' + captchaId);
+    elCaptchaImage.setAttribute('src', 'https://' + host + '/apiv1/GenerateCaptcha?id=' + captchaId);
     elCaptchaAnswer.value = '';
   };
 
@@ -400,14 +357,14 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   var setUserDefaults = function (options) {
     var timeZone = elTimeZone.value;
-    var continent = localizer.getContinentByTimeZone(timeZone);
+    var continent = local.getContinentByTimeZone(timeZone);
     var user = options.user;
 
     user.timeZoneId = timeZone;
-    user.isMetric = localizer.getIsMetricByTimeZone(timeZone);
-    user.fuelEconomyUnit = localizer.getFuelEconomyUnitByTimeZone(timeZone);
-    user.dateFormat = localizer.getDateTimeFormatByTimeZone(timeZone);
-    user.mapViews = localizer.getMapViewsByTimeZone(continent);
+    user.isMetric = local.getIsMetricByTimeZone(timeZone);
+    user.fuelEconomyUnit = local.getFuelEconomyUnitByTimeZone(timeZone);
+    user.dateFormat = local.getDateTimeFormatByTimeZone(timeZone);
+    user.mapViews = local.getMapViewsByTimeZone(continent);
     user.firstName = elFirstName.value;
     user.lastName = elLastName.value;
     // Could also set the user's language here (en,fr,es,de,ja): user.language = 'en';
@@ -451,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var redirect = function (options) {
     // use rison to encode token and add to url
     var token = rison.encode_object({"token": options.credentials});
-    window.location = protocol + '//' + options.server + '/' + options.credentials.database + '#' + token;
+    window.location = 'https://' + options.server + '/' + options.credentials.database + '#' + token;
   };
 
   // Wire up events
@@ -512,6 +469,18 @@ document.addEventListener('DOMContentLoaded', function () {
   elSubmit.addEventListener('click', function (evt) {
     var formValues;
 
+    var error = function (error) {
+      hideLoading();
+
+      renderCaptcha();
+      elSubmit.removeAttribute('disabled');
+
+      showError(error);
+      if (error.name === 'CaptchaException') {
+        elCaptchaAnswer.focus();
+      }
+    };
+
     evt.preventDefault();
 
     elSubmit.setAttribute('disabled', 'disabled');
@@ -531,22 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(getUser)
       .then(setUserDefaults)
       .then(sendSuccessEmail)
-      .then(redirect)
-      .fail(function (error) {
-        hideLoading();
-
-        if (error.errors && error.errors.length) {
-          error = error.errors[0];
-        }
-
-        renderCaptcha();
-        elSubmit.removeAttribute('disabled');
-
-        showError(error);
-        if (error.name === 'CaptchaException') {
-          elCaptchaAnswer.focus();
-        }
-      })
+      .then(redirect, error);
   });
 
   // Setup the form fields that need to request data from the API
