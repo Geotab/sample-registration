@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var length = chrArray.length;
     for (var num = 0; num < length; num++) {
       var c = chrArray[num];
-      if ((CharFunk.isLetterOrDigit(String.fromCharCode(c)) || c === underscore_char ? 1 : 0) !== 0) {
+      if ((/\w|\d/.test(String.fromCharCode(c)) ? 1 : 0) !== 0) {
         var num1 = i;
         i++;
         companyNameCharacters[num1] = c;
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function () {
    * Watch the company name, generate the short database name from it and check it's availability
    */
   elCompanyName.addEventListener('keyup', function () {
-    var splitCompanyName = CharFunk.splitOnMatches(elCompanyName.value, CharFunk.isWhitespace);
+    var splitCompanyName = elCompanyName.value.split(/\s+/);
     var databaseName = splitCompanyName.length ? splitCompanyName[0] : '';
     elDatabaseName.value = databaseName;
     updateShortDatabase(databaseName);
