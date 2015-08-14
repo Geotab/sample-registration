@@ -105,28 +105,32 @@ document.addEventListener('DOMContentLoaded', function () {
    * @returns {string} - the short database name
    */
   var createDatabaseNameFromCompany = function (companyName) {
-    var underscore_char = 95;
-    var companyNameCharacters = new Array(companyName.length);
-    var i = 0;
-    var chrArray = companyName.split('').map(function (c) {
-      return c.charCodeAt(0);
-    });
-    var length = chrArray.length;
-    for (var num = 0; num < length; num++) {
-      var c = chrArray[num];
+    var underscore_char = 95,
+      companyNameCharacters = new Array(companyName.length),
+      i = 0,
+      num, num1, num2, c,
+      chrArray = companyName.split('').map(function (c) {
+        return c.charCodeAt(0);
+      }),
+      length = chrArray.length;
+
+    for (num = 0; num < length; num++) {
+      c = chrArray[num];
       if ((/\w|\d/.test(String.fromCharCode(c)) ? 1 : 0) !== 0) {
-        var num1 = i;
+        num1 = i;
         i++;
         companyNameCharacters[num1] = c;
       } else if (i > 0 && companyNameCharacters[i - 1] !== underscore_char) {
-        var num2 = i;
+        num2 = i;
         i++;
         companyNameCharacters[num2] = underscore_char;
       }
     }
+
     if (i > 0 && companyNameCharacters[i - 1] === underscore_char) {
       i = i + -1;
     }
+
     return String.fromCharCode.apply(String.fromCharCode, companyNameCharacters).substr(0, i);
   };
 
