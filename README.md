@@ -2,7 +2,7 @@
 
 ## Overview
 
-A MyGeotab API sample that illustrates how to:
+A MyGeotab API javascript sample that illustrates how to:
 1. determine if a database name is available
 2. register a new database
 3. perform post registration setup on the new database
@@ -11,18 +11,25 @@ A MyGeotab API sample that illustrates how to:
 
 ### Dependencies
 * Bootstrap (css only)
-* CharFunk
 * RISON
 * node-uuid
 
 ## Installation/ Quick start
 
-Install [Node.js](https://nodejs.org/)
+Make sure you have [Node.js](https://nodejs.org/) and [Git](https://git-scm.com/) installed.
+
+If not already installed, add [Grunt](http://gruntjs.com/) and [Bower](http://bower.io/)
 ```
 $> npm install -g grunt
+$> npm install -g grunt-cli
+$> npm install -g bower
+```
+Clone the repo and run
+```
 $> git clone https://github.com/geotab/sample-registration.git sample-registration
 $> cd sample-registration
 $> npm install
+$> bower install
 $> grunt serve
 ```
 
