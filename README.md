@@ -3,6 +3,7 @@
 ## Overview
 
 A MyGeotab API javascript sample that illustrates how to:
+
 1. determine if a database name is available
 2. register a new database
 3. perform post registration setup on the new database
