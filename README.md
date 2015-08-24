@@ -1,4 +1,4 @@
-# MyGeotab SDK Registration Sample
+# MyGeotab SDK: Registration Sample
 
 ## Overview
 
