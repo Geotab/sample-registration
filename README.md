@@ -7,7 +7,7 @@ A MyGeotab API javascript sample that illustrates how to:
 1. determine if a database name is available
 2. register a new database
 3. perform post registration setup on the new database
-4. send a conformation email
+4. send a confirmation email
 5. redirect user to the new database
 
 ### Dependencies
