@@ -153,9 +153,8 @@ document.addEventListener('DOMContentLoaded', function () {
       clearTimeout(checkAvailabilityTimeout);
     }
     checkAvailabilityTimeout = setTimeout(function () {
-      call(host, 'FindServer', {
-        database: databaseName,
-        server: host
+      call(host, 'DatabaseExists', {
+        database: databaseName
       })
         .then(function (result) {
           changeValidationState(elDatabaseName.parentNode, result ? validationState.error : validationState.success);
