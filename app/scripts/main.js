@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
         id: captchaId,
         answer: elCaptchaAnswer.value
       },
-      databaseName: elDatabaseName.value,
+      database: elDatabaseName.value,
       userName: elEmail.value,
       password: elPassword.value,
       companyDetails: {
@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
       isValid = false;
       changeValidationState(elCompanyName.parentNode, validationState.error);
     }
-    if (!values.databaseName) {
+    if (!values.database) {
       isValid = false;
       changeValidationState(elDatabaseName.parentNode, validationState.error);
     }
