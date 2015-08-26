@@ -142,8 +142,9 @@ document.addEventListener('DOMContentLoaded', function () {
    * @param databaseName {string} - the database name
    */
   var checkAvailability = function (databaseName) {
+    elDatabaseName.parentNode.querySelector('.help-block').style.display = 'none';
+    changeValidationState(elDatabaseName.parentNode, validationState.none);
     if (!databaseName) {
-      changeValidationState(elDatabaseName.parentNode, validationState.none);
       elWaiting.style.display = 'none';
       return;
     }
