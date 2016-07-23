@@ -1,8 +1,29 @@
 // jshint devel:true
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
-  // This is the host will will post to to create the database. This should be the root server in the federation.
-  var host = 'my.geotab.com';
+
+  var CONFIG = {
+    // This is the host will post to to create the database. This should be the root server in the federation.
+    host: 'my.geotab.com',
+    debug: false,
+    // Local debug config (you must create DB and admin user manually)
+    debugDBConfig: {
+      db: 'temp', // loacal DB name
+      user: 'temp@temp.com', // DB admin user
+      password: '1111111' // DB admin user password
+    },
+    allowedSecurityRules: [ // If not empty array then Restricted Admin user will be created with permission provided
+      'AboutCheckmate',
+      'DeviceAdmin',
+      'DeviceAdminAdvanced',
+      'DeviceAdminDeleteUnplugReplace',
+      'DeviceList',
+      'DisplayMap',
+      'NotificationList',
+      'TripsActivityReport',
+      'UserSettings'
+    ]
+  };
 
   // local - helps create local options based on selected time zone. See app/scripts/local.js.
   var local = geotab.local;
@@ -34,6 +55,19 @@ document.addEventListener('DOMContentLoaded', function () {
   var elSubmit = document.querySelector('#submit');
 
   var elRequiredInputs = document.querySelectorAll('input[required]');
+
+  if(CONFIG.debug) {
+    elCompanyName.value = "qqq";
+    elDatabaseName.value = "qqq";
+    elPhoneNumber.value = "qqq";
+    elFleetSize.value = "qqq";
+
+    elFirstName.value = "qqq";
+    elLastName.value = "qqq";
+    elEmail.value = "qqq@qqq.com";
+    elPassword.value = "qqq";
+    elConfirmPassword.value = "qqq";
+  }
 
   // Dom helpers
   /**
@@ -153,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
       clearTimeout(checkAvailabilityTimeout);
     }
     checkAvailabilityTimeout = setTimeout(function () {
-      call(host, 'DatabaseExists', {
+      call(CONFIG.host, 'DatabaseExists', {
         database: databaseName
       })
         .then(function (result) {
@@ -182,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
    * Get a list of IANA time zones form the server and add to time zone select input
    */
   var renderTimeZones = function () {
-    call(host, 'GetTimeZones')
+    call(CONFIG.host, 'GetTimeZones')
       .then(function (timeZones) {
         elTimeZone.innerHTML = timeZones
           .sort(function (a, b) {
@@ -203,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   var renderCaptcha = function () {
     captchaId = uuid.v4();
-    elCaptchaImage.setAttribute('src', 'https://' + host + '/apiv1/GenerateCaptcha?id=' + captchaId);
+    elCaptchaImage.setAttribute('src', 'https://' + CONFIG.host + '/apiv1/GenerateCaptcha?id=' + captchaId);
     elCaptchaAnswer.value = '';
   };
 
@@ -305,6 +339,9 @@ document.addEventListener('DOMContentLoaded', function () {
    * @returns {object} - the database, user and password
    */
   var createDatabase = function (params) {
+    if(CONFIG.debug) {
+      return createDebugDatabase(params);
+    }
     var processResult = function (results) {
       var parts = results.split('/');
 
@@ -315,7 +352,26 @@ document.addEventListener('DOMContentLoaded', function () {
         password: params.password
       };
     };
-    return call(host, 'CreateDatabase', params).then(processResult);
+    return call(CONFIG.host, 'CreateDatabase', params).then(processResult);
+  };
+
+
+  var createDebugDatabase = function () {
+    var processResult = function () {
+      return {
+        server: CONFIG.host,
+        database: CONFIG.debugDBConfig.db,
+        userName: CONFIG.debugDBConfig.user,
+        password: CONFIG.debugDBConfig.password
+      };
+    };
+    return new Promise(function (resolve, reject) {
+      if(CONFIG.debugDBConfig) {
+        resolve(processResult());
+      } else {
+        reject('There is no DEBUG_CONFIG');
+      }
+    });
   };
 
   /**
@@ -350,6 +406,45 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }).then(function (results) {
       options.user = results[0];
+      return options;
+    });
+  };
+
+  /**
+   *  Create clearance
+   * @param options {object}
+   * @returns {object} - options
+   */
+  var createClearance = function (options) {
+    var user = options.user;
+
+    if(!CONFIG.allowedSecurityRules.length) {
+      return new Promise(function (resolve) {
+        return resolve(options);
+      });
+    }
+
+    return call(options.server, 'Add', {
+      credentials: options.credentials,
+      typeName: 'Group',
+      entity: {
+        id: null,
+        parent: {id: 'GroupNothingSecurityId'},
+        name: 'Restricted Admin',
+        securityFilters: CONFIG.allowedSecurityRules.map(function(permission){
+          return {
+            isAdd: true,
+            securityIdentifier: permission
+          }
+        }),
+        color:{a: 0, b: 0, g: 0, r: 0}
+      }
+    }).then(function(clearenceId) {
+      // pass on the options to the next promise
+      user.securityGroups = [{
+        id: clearenceId,
+        color: {"r":0,"g":0,"b":0,"a":255}
+      }];
       return options;
     });
   };
@@ -391,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var sendSuccessEmail = function (options) {
     var credentials = options.credentials,
       user = options.user,
-      welcomeMessage = 'Welcome to MyGeotab, you can login to your database via this url: https://' + host + '/' + credentials.database;
+      welcomeMessage = 'Welcome to MyGeotab, you can login to your database via this url: https://' + CONFIG.host + '/' + credentials.database;
 
     return call(options.server, 'SendEmail', {
       credentials: credentials,
@@ -502,6 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
     createDatabase(formValues)
       .then(authenticate)
       .then(getUser)
+      .then(createClearance)
       .then(setUserDefaults)
       .then(sendSuccessEmail)
       .then(redirect, error);
